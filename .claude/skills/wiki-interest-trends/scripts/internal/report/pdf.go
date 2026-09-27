@@ -134,6 +134,7 @@ func Build(r *analysis.Result, n Narrative, o Options) error {
 // points the content overflows (and writes nothing), or 0 after writing the PDF.
 func buildOnce(r *analysis.Result, n Narrative, o Options, chartH float64) (float64, error) {
 	L := lbl(o.Lang)
+	n.Headline, n.Body = fontSafe(n.Headline, L), fontSafe(n.Body, L)
 	p := &gopdf.GoPdf{}
 	p.Start(gopdf.Config{PageSize: gopdf.Rect{W: pageW, H: pageH}})
 	p.SetInfo(gopdf.PdfInfo{Title: n.Headline, Creator: "wikitrend " + httpx.Version})

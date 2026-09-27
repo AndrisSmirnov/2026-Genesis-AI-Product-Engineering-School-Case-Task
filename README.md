@@ -23,6 +23,19 @@ User question ──► AI agent reads SKILL.md ──► runs the Go CLI step b
 
 **The code computes, the model orchestrates.** The model never calculates. It only runs commands, reads a short JSON (≤ 2 KB), asks the user when the topic is ambiguous, and writes text. The text of the report may contain numbers only as `{{placeholders}}`; any other digit is rejected, so the report cannot contain invented numbers.
 
+## See the results without running anything
+
+**[examples/](examples/)** has 10 real sessions with Claude Haiku 4.5. Each has the chat answer, the one-page PDF and a preview. Among them:
+- the three task examples;
+- real growth with high trust;
+- an ambiguous topic where the agent asks the user;
+- a follow-up question;
+- spikes that are not growth.
+
+| Growth with high trust | Declining, low trust (task example) |
+|---|---|
+| [![LLM report](examples/04-large-language-models-growing-high-trust/report.png)](examples/04-large-language-models-growing-high-trust/) | [![Astronomy report](examples/01-astronomy-ukrainian-declining-low-trust/report.png)](examples/01-astronomy-ukrainian-declining-low-trust/) |
+
 ## Quick start
 
 Requirements: **Go 1.22+**, bash, internet access. Python is *not* needed to use the skill.
@@ -55,6 +68,7 @@ Results are written to `wikitrend-data/runs/<run_id>/`: `report.pdf`, `chart.svg
 | Path | What |
 |---|---|
 | [`.claude/skills/wiki-interest-trends/`](.claude/skills/wiki-interest-trends/) | **The skill** (the deliverable): `SKILL.md`, Go code, references, evals |
+| [`examples/`](examples/) | 10 real sessions: agent answers, PDF reports, previews |
 | [`…/SKILL.md`](.claude/skills/wiki-interest-trends/SKILL.md) | Instructions for the agent |
 | [`…/references/METHODOLOGY.md`](.claude/skills/wiki-interest-trends/references/METHODOLOGY.md) | Metric, trend, trust checks, calibration |
 | [`…/ROADMAP.md`](.claude/skills/wiki-interest-trends/ROADMAP.md) | How to grow it to larger research and data volumes |
@@ -106,6 +120,8 @@ make eval-smoke    # 3 key scenarios on Haiku (needs the `claude` CLI)
 1. Потрібні **Go 1.22+**, bash та інтернет. Python для роботи навички не потрібен.
 2. Клонуй репозиторій і запусти `claude --model haiku` у його папці.
 3. Спитай, наприклад: *«Порівняй інтерес до кібербезпеки в польській, чеській і румунській Вікіпедії за 3 роки й підготуй PDF-звіт»*.
+
+**Готові результати без запуску** — у папці [`examples/`](examples/): 10 реальних сесій з Haiku, відповіді агента, PDF-звіти й превью.
 
 Ручний запуск без моделі — команди в англійському розділі вище. Результати зберігаються в `wikitrend-data/runs/<run_id>/`.
 

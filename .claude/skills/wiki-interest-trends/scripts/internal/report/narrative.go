@@ -51,6 +51,8 @@ func Render(text string, values map[string]string, next string) (Narrative, erro
 	rendered := placeholderRe.ReplaceAllStringFunc(text, func(m string) string {
 		return values[placeholderRe.FindStringSubmatch(m)[1]]
 	})
+	// Values already carry "%": "{{uk.trend}}%" must not print "+12.4%%".
+	rendered = strings.ReplaceAll(rendered, "%%", "%")
 	var lines []string
 	for _, l := range strings.Split(strings.ReplaceAll(rendered, "\r\n", "\n"), "\n") {
 		lines = append(lines, strings.TrimRight(l, " \t"))
@@ -103,4 +105,23 @@ func keys(m map[string]string) []string {
 	}
 	sort.Strings(k)
 	return k
+}
+
+// DetectLang picks the report label language from the narrative itself:
+// mostly Cyrillic letters → "uk", otherwise "en".
+func DetectLang(text string) string {
+	text = placeholderRe.ReplaceAllString(text, " ")
+	var cyr, lat int
+	for _, r := range text {
+		switch {
+		case unicode.Is(unicode.Cyrillic, r):
+			cyr++
+		case unicode.IsLetter(r):
+			lat++
+		}
+	}
+	if cyr > lat {
+		return "uk"
+	}
+	return "en"
 }

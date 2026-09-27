@@ -137,3 +137,28 @@ func TestChartSVG(t *testing.T) {
 		t.Fatal("chart svg incomplete")
 	}
 }
+
+func TestFontSafe(t *testing.T) {
+	got := fontSafe("✅ Інтерес ≠ готовність платити\nДругий  рядок ⚠️", lbl("uk"))
+	if got != "Інтерес не дорівнює готовність платити\nДругий рядок" {
+		t.Fatalf("%q", got)
+	}
+}
+
+func TestIndexIgnoresMonthsBeforeArticle(t *testing.T) {
+	v := []float64{0, 0, 0, 10, 10, 10, 20}
+	idx := indexSeries(v)
+	if !math.IsNaN(idx[0]) || idx[3] != 100*10/indexBase(v) || indexBase(v) != 12.5 {
+		t.Fatalf("idx %v base %v", idx, indexBase(v))
+	}
+}
+
+func TestDetectLangAndDoublePercent(t *testing.T) {
+	if DetectLang("Інтерес {{pl.trend}} зростає") != "uk" || DetectLang("Interest {{pl.trend}} grows") != "en" {
+		t.Fatal("language detection")
+	}
+	n, err := Render("H\nTrend {{pl.trend}}% per year", values, "")
+	if err != nil || n.Body != "Trend +12.4% per year" {
+		t.Fatalf("%q %v", n.Body, err)
+	}
+}

@@ -29,22 +29,36 @@ type canvas interface {
 	Text(x, y float64, s string, size float64, c rgb, anchor string)
 }
 
-// indexSeries rescales a share series so that the mean of its first 12 months is 100.
-// Languages of very different size become comparable on one axis.
-func indexSeries(v []float64) []float64 {
+// indexBase is the mean of the first 12 months in which the article already
+// had views. Months before a new article appeared are zeros and would make
+// the index explode (a new Polish article made the line hit the ceiling).
+func indexBase(v []float64) float64 {
 	var base float64
 	n := 0
-	for i := 0; i < len(v) && i < 12; i++ {
-		base += v[i]
-		n++
+	for _, x := range v {
+		if x > 0 {
+			base += x
+			n++
+			if n == 12 {
+				break
+			}
+		}
 	}
-	base /= float64(max(n, 1))
+	return base / float64(max(n, 1))
+}
+
+// indexSeries rescales a share series so that indexBase is 100.
+// Languages of very different size become comparable on one axis.
+func indexSeries(v []float64) []float64 {
+	base := indexBase(v)
 	res := make([]float64, len(v))
+	started := false
 	for i, x := range v {
-		if base > 0 {
+		started = started || x > 0
+		if base > 0 && started {
 			res[i] = x / base * 100
 		} else {
-			res[i] = math.NaN()
+			res[i] = math.NaN() // before the article existed: no line
 		}
 	}
 	return res
@@ -80,15 +94,11 @@ func drawChart(c canvas, r *analysis.Result, x, y, w, h float64, bandLabel strin
 	for i, l := range r.Langs {
 		// Raw is indexed with the clean base so the spike overshoot is visible.
 		cl := indexSeries(l.ShareClean)
-		base := 0.0
-		for j := 0; j < 12 && j < len(l.ShareClean); j++ {
-			base += l.ShareClean[j]
-		}
-		base /= float64(min(12, len(l.ShareClean)))
+		base := indexBase(l.ShareClean)
 		rw := make([]float64, len(l.ShareRaw))
 		for j, v := range l.ShareRaw {
 			rw[j] = math.NaN()
-			if base > 0 {
+			if base > 0 && !math.IsNaN(cl[j]) {
 				rw[j] = v / base * 100
 			}
 		}

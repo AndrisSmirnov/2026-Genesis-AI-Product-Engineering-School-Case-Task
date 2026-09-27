@@ -24,9 +24,10 @@ All data work is done by the `wikitrend` CLI. **You never compute numbers or wri
    - `missing` or `skipped_topics` → you **must** say in the final answer which language has no article (a possible unfilled niche). Never skip this.
 3. **Analyze**: `WT analyze --spec <spec path from resolve>`
 4. **Answer in chat**:
-   - Use only numbers printed in the JSON; copy them exactly.
+   - **Answer in the language the user wrote in**, whatever Wikipedia editions are analysed.
+   - Use only numbers printed in the JSON; copy them exactly. `{{placeholders}}` are only for `narrative.md` — in the chat, always write the real numbers.
    - For each language give the verdict, the trend per year with its interval, and the trust level with its reasons.
-   - If `warnings` are present, mention them. Do not add reasons or warnings that are not in the output.
+   - If `warnings` are present, mention them in their own meaning. Do not add reasons or warnings that are not in the output.
    - Always add: *interest ≠ willingness to pay; language ≠ country*.
    - Even if the user asks for "just a number", give that number **together with its trust level** in one sentence. For example: "−47.7% per year (trust: low, because of low volume)".
 5. **Report**: when the user wants a report, PDF or something shareable, or the question asks for a "short report" or "звіт":
@@ -34,7 +35,7 @@ All data work is done by the `wikitrend` CLI. **You never compute numbers or wri
       - line 1: headline, one sentence, under 140 characters;
       - then 2–3 short paragraphs, under 1100 characters in total.
    2. **Do not type a single digit.** Every number must be a placeholder such as `{{uk.trend}}` (the list is in `placeholders`). Write words instead of numbers ("two years" → `{{period.months}}` months).
-   3. Run `WT report --run <run_id> --narrative <path> --lang <uk|en>`.
+   3. Write the narrative **in the user's language**. Run `WT report --run <run_id> --narrative <path>` (label language is detected from the text; `--lang uk|en` overrides it).
    4. `RAW_NUMBER` / `UNKNOWN_PLACEHOLDER` / `NARRATIVE_TOO_LONG` → fix the text and rerun. Do not change the numbers.
    5. Give the user the `pdf` path.
 6. **Follow-up questions** reuse the previous run (data comes from the cache):
@@ -70,7 +71,7 @@ Language codes: Ukrainian `uk`, Polish `pl`, Czech `cs`, Slovak `sk`, English `e
 
 - Never write scripts, never fetch Wikipedia yourself, never read `data.json`.
 - If a command returns `status: error`, do what its `next_step` says. On `RATE_LIMITED`, wait `retry_after_s` seconds and rerun the same command.
-- Do not present low-trust results as findings; call them weak signals.
+- Do not present low-trust results as findings; call them weak signals. Low trust means "not enough evidence", never "a hidden opportunity".
 - Details:
   - [references/METHODOLOGY.md](references/METHODOLOGY.md) — formulas and thresholds;
   - [references/ERRORS.md](references/ERRORS.md) — all error codes;

@@ -17,7 +17,7 @@ type Labels struct {
 	Missing                                                               string
 	Next                                                                  map[string]string
 	Reasons                                                               map[string]string
-	Generated                                                             string
+	Generated, NotEqual                                                   string
 }
 
 var labels = map[string]Labels{
@@ -39,6 +39,7 @@ var labels = map[string]Labels{
 		},
 		Missing:   "Статті немає",
 		Generated: "Згенеровано",
+		NotEqual:  "не дорівнює",
 		Next: map[string]string{
 			"low_volume":   "Малий обсяг: розширте тему кошиком суміжних статей або оберіть ширшу тему.",
 			"spikes":       "Перевірте, що спричинило сплеск у {month} (новини, головна сторінка, соцмережі).",
@@ -82,6 +83,7 @@ var labels = map[string]Labels{
 		},
 		Missing:   "No article",
 		Generated: "Generated",
+		NotEqual:  "is not",
 		Next: map[string]string{
 			"low_volume":   "Low volume: widen the topic with a basket of related articles or pick a broader topic.",
 			"spikes":       "Check what caused the spike in {month} (news, main page, social media).",
@@ -138,4 +140,26 @@ func Localize(values map[string]string, lang string) map[string]string {
 		}
 	}
 	return res
+}
+
+// fontSafe replaces characters the embedded Noto Sans cannot draw: "≠"
+// becomes words, emoji and pictographs are dropped. Otherwise they silently
+// vanish from the PDF ("interest ≠ willingness" rendered as "interest   willingness").
+func fontSafe(s string, L Labels) string {
+	s = strings.ReplaceAll(s, "≠", L.NotEqual)
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r == 0xFE0F || r == 0x200D: // emoji variation selector / joiner
+		case r >= 0x1F000 && r <= 0x1FAFF: // emoji, pictographs
+		case r >= 0x2600 && r <= 0x27BF: // ✅ ⚠ ❌ ✓ etc.
+		default:
+			b.WriteRune(r)
+		}
+	}
+	lines := strings.Split(b.String(), "\n")
+	for i, l := range lines {
+		lines[i] = strings.Join(strings.Fields(l), " ")
+	}
+	return strings.Join(lines, "\n")
 }

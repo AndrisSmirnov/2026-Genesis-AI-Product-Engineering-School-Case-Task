@@ -504,7 +504,7 @@ func reportCmd(e env, args []string) {
 	run := fs.String("run", "", "run_id from analyze")
 	narr := fs.String("narrative", "", "path to the narrative text (first line = headline)")
 	text := fs.String("text", "", "narrative text inline (alternative to --narrative)")
-	lang := fs.String("lang", "uk", "report label language: uk|en")
+	lang := fs.String("lang", "", "report label language: uk|en (default: detected from the narrative)")
 	parse(fs, args)
 	if *run == "" || (*narr == "" && *text == "") {
 		out.Fail(out.Errf("BAD_ARGS", fmt.Sprintf("%s report --run <run_id> --narrative <file>", e.bin), "--run and --narrative (or --text) are required"))
@@ -518,6 +518,9 @@ func reportCmd(e env, args []string) {
 			out.Fail(out.Errf("BAD_ARGS", "Write the narrative file first (see next_step of analyze).", "cannot read %s", *narr))
 		}
 		body = string(b)
+	}
+	if *lang == "" {
+		*lang = report.DetectLang(body)
 	}
 	retry := fmt.Sprintf("Fix the narrative file and rerun: %s report --run %s --narrative %s", e.bin, *run, *narr)
 	n, err := report.Render(body, report.Localize(r.Placeholder, *lang), retry)
