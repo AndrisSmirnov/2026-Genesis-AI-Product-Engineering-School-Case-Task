@@ -33,6 +33,8 @@ def load(path):
 
 
 def parse(events):
+    if any("part" in e for e in events):
+        return parse_opencode(events)
     t = {"commands": [], "bash": [], "writes": [], "tool_outputs": [], "answer": "", "cost": 0.0,
          "turns": 0, "duration_ms": 0, "tool_calls": 0, "skill_used": False, "cli_errors": 0,
          "input_tokens": 0, "output_tokens": 0}
@@ -72,6 +74,48 @@ def parse(events):
             u = e.get("usage", {}) or {}
             t["input_tokens"] = (u.get("input_tokens", 0) or 0) + (u.get("cache_read_input_tokens", 0) or 0) + (u.get("cache_creation_input_tokens", 0) or 0)
             t["output_tokens"] = u.get("output_tokens", 0) or 0
+    return t
+
+
+def parse_opencode(events):
+    """OpenCode `run --format json` events: tool_use / text / step_finish."""
+    t = {"commands": [], "bash": [], "writes": [], "tool_outputs": [], "answer": "", "cost": 0.0,
+         "turns": 0, "duration_ms": 0, "tool_calls": 0, "skill_used": False, "cli_errors": 0,
+         "input_tokens": 0, "output_tokens": 0}
+    texts, ts = [], []
+    for e in events:
+        p = e.get("part", {})
+        if e.get("timestamp"):
+            ts.append(e["timestamp"])
+        if e.get("type") == "tool_use":
+            t["tool_calls"] += 1
+            tool, st = p.get("tool"), p.get("state", {})
+            inp, outp = st.get("input", {}) or {}, str(st.get("output", ""))
+            if tool == "skill" and inp.get("name") == "wiki-interest-trends":
+                t["skill_used"] = True
+            if tool == "bash":
+                cmd = inp.get("command", "")
+                t["bash"].append(cmd)
+                for m in CMD_RE.finditer(cmd):
+                    t["commands"].append((m.group(1), cmd))
+            if tool in ("write", "edit"):
+                t["writes"].append(inp.get("filePath", inp.get("file_path", "")))
+            t["tool_outputs"].append(outp)
+            if '"status":"error"' in outp.replace(" ", ""):
+                t["cli_errors"] += 1
+        elif e.get("type") == "text":
+            texts.append(p.get("text", ""))
+        elif e.get("type") == "step_finish":
+            t["turns"] += 1
+            t["cost"] += p.get("cost", 0) or 0
+            tok = p.get("tokens", {}) or {}
+            t["input_tokens"] += (tok.get("input", 0) or 0) + ((tok.get("cache") or {}).get("read", 0) or 0)
+            t["output_tokens"] += tok.get("output", 0) or 0
+        elif e.get("type") == "error":
+            t["tool_outputs"].append("AGENT_ERROR " + json.dumps(e.get("error", {}))[:300])
+    t["answer"] = texts[-1] if texts else ""
+    if len(ts) > 1:
+        t["duration_ms"] = ts[-1] - ts[0]
     return t
 
 

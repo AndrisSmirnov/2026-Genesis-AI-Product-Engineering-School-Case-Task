@@ -4,15 +4,18 @@
 #   evals/run.sh                      # all scenarios, 1 run each, model haiku
 #   REPEAT=3 evals/run.sh astro_uk    # one scenario, 3 runs
 #   MODEL=sonnet evals/run.sh         # another model
+#   AGENT=opencode MODEL=openrouter/nvidia/nemotron-3-super-120b-a12b:free evals/run.sh astro_uk
+#                                     # OpenCode + a free OpenRouter model (needs `opencode auth login`)
 #
 # Each run gets a fresh project directory with only this skill installed, so
 # the agent sees nothing but SKILL.md. Results: evals/results/<timestamp>/.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL="$(dirname "$HERE")"
+AGENT="${AGENT:-claude}"
 MODEL="${MODEL:-haiku}"
 REPEAT="${REPEAT:-1}"
-STAMP="$(date +%Y%m%d-%H%M%S)-$MODEL"
+STAMP="$(date +%Y%m%d-%H%M%S)-$AGENT-$(basename "$MODEL" | tr ':/' '__')"
 OUT="${OUT:-$HERE/results/$STAMP}"
 # Agents must run OUTSIDE any git repository: Claude Code discovers skills from
 # the repository root, so a workdir inside this repo would use the original skill.
@@ -29,6 +32,12 @@ fi
 
 run_claude() { # <workdir> <prompt> <out.jsonl> [session-id-to-resume]
   local wd="$1" prompt="$2" out="$3" resume="${4:-}"
+  if [ "$AGENT" = opencode ]; then
+    local extra=()
+    [ -n "$resume" ] && extra=(-s "$resume")
+    (cd "$wd" && perl -e 'alarm 900; exec @ARGV' opencode run --format json --auto -m "$MODEL" ${extra[@]+"${extra[@]}"} "$prompt" >"$out" 2>"$out.stderr")
+    return
+  fi
   local extra=()
   [ -n "$resume" ] && extra=(--resume "$resume")
   (cd "$wd" && claude -p "$prompt" --model "$MODEL" --output-format stream-json --verbose \
@@ -53,7 +62,8 @@ for id in "${ids[@]}"; do
 for l in open(sys.argv[1]):
     try: e=json.loads(l)
     except Exception: continue
-    if e.get('session_id'): print(e['session_id']); break" "$rd/turn1.jsonl")
+    sid=e.get('session_id') or e.get('sessionID')
+    if sid: print(sid); break" "$rd/turn1.jsonl")
       run_claude "$wd" "$follow" "$rd/turn2.jsonl" "$sid"
     fi
     python3 "$HERE/check.py" "$id" "$rd" | tee -a "$OUT/results.jsonl"
