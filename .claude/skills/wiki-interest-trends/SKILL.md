@@ -21,7 +21,7 @@ All data work is done by the `wikitrend` CLI. **You never compute numbers or wri
 2. **Find the articles**: `WT resolve --topic "<topic, English name works best>" --langs <codes>`
    - `status: needs_choice` → show the candidates to the user and ask which one they mean. **Never guess.** Then run `WT resolve --qid <QID> --langs <codes>`.
    - Broad topic (for example "learning English") → make a basket of 2–4 concrete topics separated by `;`: `--topic "IELTS; TOEFL; English as a second language"`. Tell the user which topics you used.
-   - `missing` or `skipped_topics` → tell the user: there is no article in that language (a possible unfilled niche).
+   - `missing` or `skipped_topics` → you **must** say in the final answer which language has no article (a possible unfilled niche). Never skip this.
 3. **Analyze**: `WT analyze --spec <spec path from resolve>`
 4. **Answer in chat**:
    - Use only numbers printed in the JSON; copy them exactly.

@@ -131,12 +131,15 @@ def main():
         need(c not in cmds1, f"ran {c} but should not")
 
     all_t = [t1] + ([t2] if t2 else [])
+    seen_outputs = []
     for t in all_t:
+        # A follow-up answer may legitimately quote numbers from earlier turns.
+        seen_outputs += t["tool_outputs"]
         code_files = [w for w in t["writes"] if re.search(r"\.(py|go|js|ts|sh|r)$", w, re.I)]
         need(not code_files, f"wrote code files {code_files}")
         diy = [b for b in t["bash"] if re.search(r"\b(python3?|node|curl|wget)\b", b) and "wikitrend" not in b]
         need(not diy, f"did its own data work: {diy[:2]}")
-        bad = grounded(t["answer"], t["tool_outputs"])
+        bad = grounded(t["answer"], seen_outputs)
         need(not bad, f"percentages not found in tool output: {bad}")
     need(t1["answer"].strip() != "", "empty answer")
 
