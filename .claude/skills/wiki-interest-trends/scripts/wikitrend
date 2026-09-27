@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Entry point for the agent: compiles (cached by Go) and runs the CLI.
+# No binary is stored in the skill; `go run` builds into Go's own cache.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ! command -v go >/dev/null 2>&1; then
+  echo '{"status":"error","code":"GO_MISSING","hint":"Go 1.22+ is required (https://go.dev/dl/; macOS: brew install go; Windows: winget install GoLang.Go).","next_step":"Tell the user to install Go, then rerun doctor. Do not write analysis code yourself."}'
+  exit 3
+fi
+export WIKITREND_CWD="${WIKITREND_CWD:-$PWD}"
+export WIKITREND_BIN="$DIR/wikitrend"
+export CGO_ENABLED=0
+export GOFLAGS="${GOFLAGS:-} -mod=readonly"
+cd "$DIR"
+exec go run ./cmd/wikitrend "$@"
