@@ -1,0 +1,23 @@
+# Артефакти запусків навички
+/runs/
+/cache/
+*.pdf
+!examples/**/*.pdf
+
+# Go
+*.test
+*.out
+coverage.*
+
+# ОС / редактори
+.DS_Store
+.idea/
+.vscode/
+
+# Локальні налаштування Claude Code
+.claude/settings.local.json
+
+# Навичка: дані запусків і результати евалів
+wikitrend-data/
+.claude/skills/wiki-interest-trends/evals/results/
+.claude/skills/wiki-interest-trends/.venv/
