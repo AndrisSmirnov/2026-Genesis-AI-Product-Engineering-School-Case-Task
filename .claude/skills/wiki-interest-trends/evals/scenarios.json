@@ -1,0 +1,51 @@
+{
+  "_doc": "Eval scenarios for a cheap model (Claude Haiku 4.5). Every run is also checked for the global rules in check.py: the skill was used, no analysis code was written, every percentage in the answer comes from tool output.",
+  "scenarios": [
+    {
+      "id": "astro_uk",
+      "prompt": "Ми думаємо додати курс з астрономії до освітнього застосунку. Чи зростає інтерес до цієї теми в україномовній Wikipedia, і наскільки цьому зростанню можна довіряти?",
+      "checks": {"must_run": ["resolve", "analyze"], "answer_any": [["довір", "trust"], ["низьк", "low", "середн", "висок"]]}
+    },
+    {
+      "id": "fasting_pl_cs_2y",
+      "prompt": "Порівняй зростання інтересу до інтервального голодування в польськомовній та чеськомовній Wikipedia за останні два роки.",
+      "checks": {"must_run": ["resolve", "analyze"], "analyze_months": 24, "answer_any": [["немає", "відсутн", "no article", "missing", "не існує", "нема"]]}
+    },
+    {
+      "id": "english_basket_report",
+      "prompt": "Ми створюємо застосунок для вивчення мов. Порівняй інтерес до вивчення англійської у мовних розділах uk, pl, tr, vi, id та підготуй короткий звіт у PDF: які аудиторії варто дослідити наступними й чому?",
+      "checks": {"must_run": ["resolve", "analyze", "report"], "pdf": true, "basket": true}
+    },
+    {
+      "id": "followup_cache",
+      "prompt": "Чи зростає інтерес до шахів у німецькомовній Wikipedia? Коротко.",
+      "followup": "А якщо дивитися лише останні 2 роки?",
+      "checks": {"must_run": ["resolve", "analyze"], "followup_must_run": ["analyze"], "followup_must_not_run": ["resolve"], "followup_from": true, "followup_months": 24, "followup_network_zero": true}
+    },
+    {
+      "id": "ambiguous_mercury",
+      "prompt": "Чи зростає інтерес до Меркурія в польській і чеській Вікіпедії?",
+      "checks": {"must_run": ["resolve"], "must_not_run": ["analyze"], "asks_user": true}
+    },
+    {
+      "id": "just_number",
+      "prompt": "Просто скажи одним числом: на скільки відсотків на рік змінюється інтерес до йоги в німецькій Вікіпедії?",
+      "checks": {"must_run": ["resolve", "analyze"], "answer_has_percent": true, "answer_any": [["довір", "trust", "надійн"]]}
+    },
+    {
+      "id": "custom_criteria",
+      "prompt": "Для нас тема перспективна, якщо частка переглядів зростає щонайменше на 20% на рік і має не менше 3000 переглядів на місяць. Які з мовних розділів es, pt, it підходять для курсу з кібербезпеки?",
+      "checks": {"must_run": ["resolve", "analyze"], "criteria": {"min_growth_pct": 20, "min_monthly_views": 3000}}
+    },
+    {
+      "id": "report_en",
+      "prompt": "Prepare a one-page PDF report: is interest in the Rust programming language growing in German and French Wikipedia?",
+      "checks": {"must_run": ["resolve", "analyze", "report"], "pdf": true}
+    },
+    {
+      "id": "negative_trigger",
+      "prompt": "Напиши на Go функцію, яка перевертає рядок з урахуванням Unicode. Лише код.",
+      "checks": {"must_not_run": ["doctor", "resolve", "analyze", "report"], "negative": true}
+    }
+  ]
+}
